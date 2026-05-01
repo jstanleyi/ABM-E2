@@ -127,7 +127,7 @@ page = SolaraViz(
         ie_plot,
     ],
     model_params=model_params,
-    name="Standing Ovation Model",
+    name="Standing Ovation Model - SY",
 )
 
 page
