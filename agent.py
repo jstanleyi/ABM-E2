@@ -42,6 +42,9 @@ class AudienceAgent(Agent):
                 visible_positions.append((nx, y))
 
         # Cone in front
+        # distance 1: x-1, x, x+1
+        # distance 2: x-2, ..., x+2
+        # etc.
         for distance in range(1, y + 1):
             visible_y = y - distance
             for visible_x in range(x - distance, x + distance + 1):
@@ -64,11 +67,16 @@ class AudienceAgent(Agent):
         If irreversible_diffusion is True:
         - Once an agent stands, the agent remains standing.
         """
+        # Extension: if irreversible diffusion is turned on, standing is absorbing.
+        # Once standing, the agent cannot sit down again.
         if self.model.irreversible_diffusion and self.standing:
             return True
 
         neighbors = self.get_visible_neighbors()
 
+        # Edge case:
+        # Front-row agents may have very few visible neighbors. The paper does
+        # not specify a precise tie/no-neighbor rule, so I use random choice.
         if len(neighbors) == 0:
             return self.random.choice([True, False])
 
@@ -82,6 +90,8 @@ class AudienceAgent(Agent):
             return False
 
         # Tie case
+        # The paper states that ties can be handled randomly, so this is a
+        # reasonable implementation choice.
         return self.random.choice([True, False])
 
     def compute_next_state(self):

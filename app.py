@@ -27,6 +27,10 @@ def agent_portrayal(agent):
 model_params = {
     "width": Slider("Width", value=20, min=5, max=50, step=1),
     "height": Slider("Height", value=20, min=5, max=50, step=1),
+
+    # The paper uses threshold logic for initial standing.
+    # I make the threshold adjustable because the initial standing proportion
+    # strongly affects whether the model converges, collapses, or diffuses.
     "threshold": Slider(
         "Initial standing threshold",
         value=0.75,
@@ -34,12 +38,19 @@ model_params = {
         max=1.0,
         step=0.05,
     ),
+
+    # These are the three updating rules discussed in the paper.
     "update_rule": {
         "type": "Select",
         "value": "random_async",
         "values": ["synchronous", "random_async", "incentive_async"],
         "label": "Update rule",
     },
+
+    # Extension from the paper:
+    # The paper's main computational model allows agents to switch between
+    # standing and sitting. This checkbox adds an irreversible adoption version
+    # to compare coordination dynamics with diffusion dynamics.
     "irreversible_diffusion": {
         "type": "Checkbox",
         "value": False,

@@ -29,16 +29,34 @@ class StandingOvationModel(Model):
     ):
         super().__init__(seed=seed)
 
+        # The paper's computational example uses a square auditorium with
+        # 400 seats. The default 20 x 20 grid reproduces that baseline size,
+        # while the GUI allows the user to vary it.
         self.width = width
         self.height = height
+
+        # The paper uses a threshold of 0.5 in one formal example.
+        # I expose threshold as a parameter because changing the initial
+        # standing proportion is important for exploring model dynamics.
         self.threshold = threshold
+
+        # This parameter selects among the three update procedures discussed
+        # in the paper.
         self.update_rule = update_rule
+
+        # Extension: when True, standing becomes irreversible.
+        # This is included to compare coordination dynamics with diffusion
+        # dynamics and to examine the conditions under which S-shaped curves
+        # emerge more clearly.
         self.irreversible_diffusion = irreversible_diffusion
 
+        # Non-torus grid because an auditorium does not wrap around at edges.
         self.grid = MultiGrid(width, height, torus=False)
         self.audience = []
         self.step_count = 0
 
+        # Create one audience member per seat.
+        # y = 0 is treated as the front row; larger y values are farther back.
         for y in range(height):
             for x in range(width):
                 agent = AudienceAgent(
@@ -49,6 +67,10 @@ class StandingOvationModel(Model):
                 self.grid.place_agent(agent, (x, y))
                 self.audience.append(agent)
 
+        # Store initial majority for informational efficiency.
+        # The paper defines informational efficiency across simulation runs.
+        # In this GUI version, I track whether the current majority matches the
+        # initial majority within a single run.
         self.initial_standing_count = self.count_standing()
         self.initial_majority_standing = (
             self.initial_standing_count > self.total_agents() / 2
@@ -56,9 +78,17 @@ class StandingOvationModel(Model):
 
         self.datacollector = DataCollector(
             model_reporters={
+                # Main diffusion/coordination outcome: number standing over time.
                 "Standing": lambda m: m.count_standing(),
+
+                # Same information as a proportion, which makes runs with
+                # different grid sizes easier to compare.
                 "PercentStanding": lambda m: m.percent_standing(),
+
+                # Paper-inspired metric: local disagreement with visible majority.
                 "StickInMuds": lambda m: m.compute_stick_in_muds(),
+
+                # Paper-inspired metric adapted for a single GUI run.
                 "InformationalEfficiency": lambda m: m.compute_information_efficiency(),
             }
         )
@@ -90,6 +120,8 @@ class StandingOvationModel(Model):
             standing_count = sum(neighbor.standing for neighbor in neighbors)
             sitting_count = len(neighbors) - standing_count
 
+            # If there is no local majority, the agent is not counted as either
+            # agreeing or disagreeing with the local majority.
             if standing_count == sitting_count:
                 continue
 
